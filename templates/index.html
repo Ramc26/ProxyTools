@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ProxyTools — MCP Tools</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      background: #f4f5f7;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+    header {
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 1.25rem 1.5rem;
+    }
+    header h1 { margin: 0 0 0.25rem; font-size: 1.35rem; }
+    header p { margin: 0; opacity: 0.85; font-size: 0.9rem; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 2rem; }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .filters a {
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.875rem;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+    .filters a:hover { border-color: #64748b; }
+    .filters a.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #fff;
+    }
+    .server-block {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .server-head {
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .server-head h2 { margin: 0; font-size: 1.1rem; }
+    .server-head .sub { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+    .server-head .count {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+    .tool {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .tool:last-child { border-bottom: none; }
+    .tool-name {
+      font-family: ui-monospace, monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #0f172a;
+      word-break: break-all;
+    }
+    .tool-title { font-size: 0.85rem; color: #475569; margin-top: 0.2rem; }
+    .tool-desc {
+      margin: 0.6rem 0 0;
+      font-size: 0.875rem;
+      color: #334155;
+      white-space: pre-wrap;
+    }
+    .required {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .required strong { color: #b45309; }
+    .required code {
+      background: #fef3c7;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+    }
+    details {
+      margin-top: 0.65rem;
+      font-size: 0.8rem;
+    }
+    details summary {
+      cursor: pointer;
+      color: #2563eb;
+      user-select: none;
+    }
+    pre {
+      margin: 0.5rem 0 0;
+      padding: 0.75rem;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.72rem;
+      line-height: 1.4;
+    }
+    .empty {
+      padding: 2rem;
+      text-align: center;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ProxyTools</h1>
+    <p>{{ total_tools }} tools across mounted MCP servers</p>
+  </header>
+
+  <div class="wrap">
+    <nav class="filters">
+      <a href="/" class="{% if not filter %}active{% endif %}">All</a>
+      <a href="/?server=hub" class="{% if filter == 'hub' %}active{% endif %}">Hub</a>
+      <a href="/?server=github" class="{% if filter == 'github' %}active{% endif %}">GitHub</a>
+      <a href="/?server=postman" class="{% if filter == 'postman' %}active{% endif %}">Postman</a>
+    </nav>
+
+    {% if not servers %}
+      <p class="empty">No tools found. Check .env keys and restart the server.</p>
+    {% endif %}
+
+    {% for server in servers %}
+    <section class="server-block">
+      <div class="server-head">
+        <h2>{{ server.title }}</h2>
+        <div class="sub">{{ server.subtitle }}</div>
+        <span class="count">{{ server.tool_count }} tools</span>
+      </div>
+
+      {% if server.tools %}
+        {% for tool in server.tools %}
+        <article class="tool">
+          <div class="tool-name">{{ tool.name }}</div>
+          {% if tool.title %}
+          <div class="tool-title">{{ tool.title }}</div>
+          {% endif %}
+          {% if tool.description %}
+          <p class="tool-desc">{{ tool.description }}</p>
+          {% endif %}
+          {% if tool.required %}
+          <div class="required">
+            <strong>Required:</strong>
+            {% for field in tool.required %}
+            <code>{{ field }}</code>{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+          <details>
+            <summary>Input schema (JSON)</summary>
+            <pre>{{ tool.schema_json }}</pre>
+          </details>
+        </article>
+        {% endfor %}
+      {% else %}
+        <p class="empty">No tools mounted for this server.</p>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</body>
+</html>
