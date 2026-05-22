@@ -1,4 +1,4 @@
-"""Logging for MCP Studio tool calls (shows in uvicorn terminal)."""
+"""Logging for MCP Studio — tools and agent turns (human-readable terminal output)."""
 
 import json
 import logging
@@ -17,9 +17,94 @@ log = logging.getLogger("proxystudio")
 GWORKSPACE_CREDS_DIR = Path.home() / ".local/share/google-workspace-mcp/credentials"
 GWORKSPACE_ACCOUNTS = Path.home() / ".config/google-workspace-mcp/accounts.json"
 
+_LINE = "─" * 52
+_BOX = "═" * 52
 
-def _email_to_cred_filename(email: str) -> str:
-    return email.replace("@", "_at_").replace(".", "_dot_") + ".json"
+
+def _trunc(text: str, n: int = 200) -> str:
+    t = (text or "").replace("\n", " ").strip()
+    return t if len(t) <= n else t[: n - 3] + "..."
+
+
+def log_agent_turn_start(session_id: str, framework: str, user_message: str, model: str):
+    log.info("")
+    log.info(_BOX)
+    log.info("  AGENT TURN")
+    log.info("  session:   %s", session_id)
+    log.info("  framework: %s", framework)
+    log.info("  model:     %s", model)
+    log.info(_LINE)
+    log.info("  User: %s", _trunc(user_message, 300))
+
+
+def log_agent_turn_end(session_id: str, ok: bool, model_used: str, step_count: int, reply_preview: str = ""):
+    status = "OK" if ok else "FAILED"
+    log.info(_LINE)
+    log.info("  Turn %s · model=%s · steps=%d", status, model_used, step_count)
+    if reply_preview:
+        log.info("  Reply: %s", _trunc(reply_preview, 400))
+    log.info(_BOX)
+    log.info("")
+
+
+def log_agent_step(step: int, kind: str, detail: str = "", extra: dict | None = None):
+    """Human-readable step line for agent reasoning loop."""
+    label = kind.upper().ljust(12)
+    line = f"  Step {step:>2} · {label}"
+    if detail:
+        line += f" · {detail}"
+    log.info(line)
+    if extra:
+        for k, v in extra.items():
+            if v is None or v == "":
+                continue
+            if isinstance(v, dict):
+                v = json.dumps(v, default=str)
+            log.info("           %-10s %s", f"{k}:", _trunc(str(v), 350))
+
+
+def log_agent_llm(model: str, note: str = "request"):
+    log.info("  · LLM %s · model=%s", note, model)
+
+
+def log_agent_tool_call(tool_name: str, args: dict):
+    log.info("  · TOOL CALL · %s", tool_name)
+    log.info("           args: %s", _trunc(json.dumps(args, default=str), 400))
+
+
+def log_agent_tool_result(tool_name: str, ok: bool, preview: str = "", error: str = ""):
+    mark = "✓" if ok else "✗"
+    log.info("  · TOOL %s %s · %s", mark, "done" if ok else "fail", tool_name)
+    if ok and preview:
+        log.info("           result: %s", _trunc(preview, 400))
+    elif error:
+        log.info("           error:  %s", _trunc(error, 400))
+
+
+def log_agent_fallback(failed_model: str, backup_model: str, error: str):
+    log.warning(_LINE)
+    log.warning("  ⚠ PRIMARY MODEL FAILED")
+    log.warning("           failed:  %s", failed_model)
+    log.warning("           reason:  %s", _trunc(error, 300))
+    log.warning("           retry:   %s", backup_model)
+    log.warning(_LINE)
+
+
+def log_tool_request(tool_name: str, arguments: dict, extra: dict | None = None):
+    safe_args = json.dumps(arguments, default=str)
+    parts = [f"tool={tool_name}", f"args={safe_args}"]
+    if extra:
+        for k, v in extra.items():
+            parts.append(f"{k}={v}")
+    log.info("  → MCP %s", " | ".join(parts))
+
+
+def log_tool_response(tool_name: str, ok: bool, preview: str = "", error: str = ""):
+    if ok:
+        text = (preview or "").replace("\n", " ")
+        log.info("  ← MCP ok   %s | %s", tool_name, _trunc(text, 200))
+    else:
+        log.error("  ← MCP fail %s | %s", tool_name, error or preview)
 
 
 def check_gworkspace_email(email: str) -> dict:
@@ -74,21 +159,8 @@ def check_gworkspace_email(email: str) -> dict:
     return info
 
 
-def log_tool_request(tool_name: str, arguments: dict, extra: dict | None = None):
-    safe_args = json.dumps(arguments, default=str)
-    parts = [f"tool={tool_name}", f"args={safe_args}"]
-    if extra:
-        for k, v in extra.items():
-            parts.append(f"{k}={v}")
-    log.info(" → call %s", " | ".join(parts))
-
-
-def log_tool_response(tool_name: str, ok: bool, preview: str = "", error: str = ""):
-    if ok:
-        text = (preview or "")[:500]
-        log.info(" ← ok %s | %s", tool_name, text.replace("\n", " ")[:200])
-    else:
-        log.error(" ← fail %s | %s", tool_name, error)
+def _email_to_cred_filename(email: str) -> str:
+    return email.replace("@", "_at_").replace(".", "_dot_") + ".json"
 
 
 # Extra fields per operation (beyond operation + email)
