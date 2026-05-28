@@ -6,15 +6,16 @@
   <title>ProxyTools</title>
   <style>
     :root {
-      --bg: #0f1419;
-      --sidebar: #161b22;
+      --bg: #0b1020;
+      --sidebar: #0f172a;
       --surface: #ffffff;
-      --main-bg: #f4f6f9;
-      --border: #e2e8f0;
+      --main-bg: #eef2ff;
+      --border: #dbe4f5;
       --text: #0f172a;
       --muted: #64748b;
-      --accent: #3b82f6;
-      --accent-dark: #2563eb;
+      --accent: #4f46e5;
+      --accent-dark: #4338ca;
+      --surface-soft: #f8fbff;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
@@ -23,8 +24,8 @@
     .app { display: flex; height: 100vh; overflow: hidden; }
 
     .sidebar {
-      width: 260px; flex-shrink: 0; background: var(--sidebar); color: #e2e8f0;
-      display: flex; flex-direction: column; border-right: 1px solid #30363d;
+      width: 260px; flex-shrink: 0; background: linear-gradient(180deg, #0f172a 0%, #0b1226 100%); color: #e2e8f0;
+      display: flex; flex-direction: column; border-right: 1px solid #1f2a44;
     }
     .brand { padding: 1.25rem 1rem; border-bottom: 1px solid #30363d; }
     .brand h1 { margin: 0; font-size: 1.1rem; font-weight: 600; color: #fff; }
@@ -44,23 +45,57 @@
     .topbar {
       background: var(--surface); border-bottom: 1px solid var(--border);
       padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
     }
     .topbar h2 { margin: 0; font-size: 1.05rem; font-weight: 600; }
     .topbar .meta { font-size: 0.8rem; color: var(--muted); }
 
     .content { flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; }
 
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.06);
+    }
     .card h3 { margin: 0 0 0.75rem; font-size: 0.95rem; }
 
     .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
     .pick-card {
-      border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem;
+      border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem;
       cursor: pointer; display: flex; gap: 0.6rem; align-items: flex-start;
+      background: var(--surface-soft);
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
     }
-    .pick-card:hover { border-color: #94a3b8; }
+    .pick-card:hover { border-color: #94a3b8; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08); }
     .pick-card.disabled { opacity: 0.45; cursor: not-allowed; }
     .pick-card input { margin-top: 0.15rem; }
+    .integration-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.1rem; }
+    .integration-logo {
+      width: 26px; height: 26px; border-radius: 7px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; background: #eef2ff; color: #3730a3;
+      border: 1px solid #c7d2fe;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .integration-logo img {
+      width: 18px; height: 18px; object-fit: contain;
+      display: block;
+    }
+    .integration-logo.text {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .integration-label strong { display: block; line-height: 1.1; }
+    .integration-slug {
+      font-size: 0.68rem; color: var(--muted); font-family: ui-monospace, monospace;
+      text-transform: lowercase;
+    }
+    .integration-desc { font-size: 0.78rem; color: var(--muted); }
 
     .framework-pick { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
     .framework-pick label {
@@ -81,10 +116,42 @@
     .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
     .chip { font-size: 0.7rem; background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.55rem; border-radius: 999px; }
     .chip.fw { background: #fef3c7; color: #92400e; }
+    .chat-tools {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.55rem;
+    }
+    .chat-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .btn.btn-ghost {
+      background: #fff;
+      border-color: #cbd5e1;
+      color: #334155;
+      padding: 0.38rem 0.72rem;
+      font-size: 0.76rem;
+      border-radius: 999px;
+    }
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.38rem;
+      margin-bottom: 0.65rem;
+    }
+    .prompt-chip {
+      border: 1px dashed #c7d2fe;
+      background: #f8faff;
+      color: #3730a3;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      padding: 0.22rem 0.55rem;
+      cursor: pointer;
+    }
 
     .chat-feed {
       overflow-y: auto; padding: 1rem; background: #fafbfc;
       border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.75rem;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
     }
     .msg { margin-bottom: 1rem; max-width: 85%; }
     .msg.user { margin-left: auto; }
@@ -94,7 +161,11 @@
     }
     .msg.user .bubble { background: var(--accent-dark); color: #fff; border-bottom-right-radius: 4px; }
     .msg.bot .bubble { background: #fff; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-    .msg .who { font-size: 0.7rem; color: var(--muted); margin-bottom: 0.25rem; font-weight: 600; }
+    .msg .who {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.7rem; color: var(--muted); margin-bottom: 0.25rem; font-weight: 600;
+    }
+    .msg .when { font-weight: 500; color: #94a3b8; margin-left: 0.8rem; }
     .bubble.md { white-space: normal; }
     .bubble.md h1, .bubble.md h2, .bubble.md h3 { margin: 0.6rem 0 0.35rem; font-size: 1rem; }
     .bubble.md p { margin: 0.4rem 0; }
@@ -120,13 +191,47 @@
       width: 280px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 12px;
       background: #0f172a; color: #cbd5e1; font-family: ui-monospace, monospace;
       font-size: 0.68rem; overflow-y: auto; padding: 0.65rem; display: none;
+      transition: width .2s ease, padding .2s ease, opacity .2s ease;
     }
     .agent-log-panel.show { display: block; }
+    .agent-log-panel.collapsed {
+      width: 0;
+      padding: 0;
+      border: none;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .agent-log-panel.collapsed #agent-log-body { display: none; }
     .agent-log-panel .log-line { margin: 0.15rem 0; line-height: 1.4; }
     .agent-log-panel .log-hdr { color: #94a3b8; margin: 0.5rem 0 0.25rem; }
     .agent-log-panel .log-ok { color: #86efac; }
     .agent-log-panel .log-warn { color: #fcd34d; }
     .agent-log-panel .log-err { color: #fca5a5; }
+    .agent-log-toolbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;
+      margin-bottom: 0.5rem; font-family: inherit;
+    }
+    .agent-log-title { color: #e2e8f0; font-weight: 600; font-size: 0.75rem; }
+    .agent-log-toggle {
+      border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
+      border-radius: 6px; font-size: 0.72rem; cursor: pointer; padding: 0.15rem 0.45rem;
+    }
+    .agent-log-panel.collapsed .agent-log-title { display: none; }
+    .agent-log-panel.collapsed .agent-log-toolbar { display: none; }
+    .agent-log-fab {
+      display: none;
+      align-self: flex-start;
+      margin-right: -0.4rem;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #cbd5e1;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      padding: 0.35rem 0.5rem;
+      cursor: pointer;
+    }
+    .agent-log-panel.collapsed + .agent-log-fab { display: inline-flex; }
 
     .chat-bar { display: flex; gap: 0.5rem; }
     .chat-bar input {
@@ -165,6 +270,32 @@
     .view.active { display: block; }
     .hidden { display: none !important; }
     .hint { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.75rem; }
+
+    .account-list { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.75rem 0; }
+    .account-row {
+      display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+    }
+    .account-row:hover { border-color: #94a3b8; }
+    .account-row.selected { border-color: var(--accent); background: #eff6ff; }
+    .account-row input { margin-top: 0.2rem; }
+    .account-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+    .badge.auth-ok { background: #dcfce7; color: #166534; }
+    .badge.auth-no { background: #f1f5f9; color: #64748b; }
+    .badge.auth-warn { background: #fef3c7; color: #92400e; }
+
+    .auth-new { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.75rem; }
+    .auth-new input {
+      flex: 1; min-width: 200px; padding: 0.5rem 0.75rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 0.85rem;
+    }
+    .alert {
+      margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.82rem;
+      border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; white-space: pre-wrap;
+    }
+    .alert.info { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
+    .alert.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+    .alert.hidden { display: none; }
   </style>
 </head>
 <body>
@@ -214,16 +345,36 @@
           </div>
           <div class="card">
             <h3>Integrations for this session</h3>
-            <p class="hint">Requires <code>OPENROUTER_API_KEY</code> in .env. Only selected apps are available to the agent.</p>
+            <p class="hint">Requires <code>OPENAI_API_KEY</code> in .env (default model: <code>gpt-4o-mini</code>). Only selected apps are available to the agent.</p>
             <div class="grid-2">
               {% for i in integrations %}
               <label class="pick-card {% if not i.env_ready %}disabled{% endif %}">
                 <input type="checkbox" name="integration" value="{{ i.id }}"
                   {% if i.default_on and i.env_ready %}checked{% endif %}
                   {% if not i.env_ready %}disabled{% endif %}>
-                <span>
-                  <strong>{{ i.title }}</strong><br>
-                  <span style="font-size:0.78rem;color:var(--muted)">{{ i.description }}</span>
+                <span class="integration-label">
+                  <span class="integration-head">
+                    <span class="integration-logo {% if i.id not in ['github', 'postman', 'brave', 'gworkspace', 'gitlab'] %}text{% endif %}">
+                      {% if i.id == 'github' %}
+                        <img src="https://cdn.simpleicons.org/github/111111" alt="GitHub logo" loading="lazy">
+                      {% elif i.id == 'postman' %}
+                        <img src="https://cdn.simpleicons.org/postman/FF6C37" alt="Postman logo" loading="lazy">
+                      {% elif i.id == 'brave' %}
+                        <img src="https://cdn.simpleicons.org/brave/FB542B" alt="Brave logo" loading="lazy">
+                      {% elif i.id == 'gworkspace' %}
+                        <img src="https://cdn.simpleicons.org/google/4285F4" alt="Google Workspace logo" loading="lazy">
+                      {% elif i.id == 'gitlab' %}
+                        <img src="https://cdn.simpleicons.org/gitlab/FC6D26" alt="GitLab logo" loading="lazy">
+                      {% else %}
+                        {{ i.id[:2] | upper }}
+                      {% endif %}
+                    </span>
+                    <span>
+                      <strong>{{ i.title }}</strong>
+                      <span class="integration-slug">{{ i.id }}</span>
+                    </span>
+                  </span>
+                  <span class="integration-desc">{{ i.description }}</span>
                   {% if not i.env_ready %}<br><span style="color:#b45309">Missing .env</span>{% endif %}
                 </span>
               </label>
@@ -231,18 +382,45 @@
             </div>
             <button type="button" class="btn btn-primary" style="margin-top:1rem" onclick="startAgentSession()">Start session</button>
           </div>
+          <div class="card" id="gworkspace-card">
+            <h3>Google Workspace account</h3>
+            <p class="hint" id="gworkspace-hint">Loading accounts…</p>
+            <div id="gworkspace-account-list" class="account-list"></div>
+            <p class="hint" style="margin-top:0.5rem">Authenticate a new email (opens a sign-in tab in <strong>this</strong> browser):</p>
+            <div class="auth-new">
+              <input type="email" id="gworkspace-new-email" placeholder="name@company.com" autocomplete="email">
+              <button type="button" class="btn btn-primary" id="gworkspace-auth-btn" onclick="authenticateGworkspace()">Authenticate</button>
+            </div>
+            <div id="gworkspace-alert" class="alert hidden" role="alert"></div>
+          </div>
         </section>
 
         <!-- Agent chat -->
         <section id="view-agent-chat" class="view">
           <div class="chat-layout">
             <div class="chips" id="session-chips"></div>
+            <div class="chat-tools">
+              <div class="quick-prompts">
+                <button type="button" class="prompt-chip" onclick="applyPrompt('List all projects I am member of in GitLab')">My GitLab projects</button>
+                <button type="button" class="prompt-chip" onclick="applyPrompt('Show latest merge request pipelines for project')">MR pipelines</button>
+                <button type="button" class="prompt-chip" onclick="applyPrompt('Summarize recent tool calls and outcomes')">Summarize activity</button>
+              </div>
+              <div class="chat-actions">
+                <button type="button" class="btn btn-ghost" onclick="clearChat()">Clear chat</button>
+                <button type="button" class="btn btn-ghost" onclick="copyLastReply()">Copy last reply</button>
+                <button type="button" class="btn btn-ghost" onclick="exportChat()">Export JSON</button>
+              </div>
+            </div>
             <div class="chat-split">
               <div class="chat-feed" id="chat-feed" style="flex:1;min-height:0"></div>
               <aside class="agent-log-panel show" id="agent-log-panel" aria-label="Agent activity log">
-                <div style="color:#e2e8f0;font-weight:600;margin-bottom:0.5rem;font-family:inherit;font-size:0.75rem">Activity log</div>
+                <div class="agent-log-toolbar">
+                  <span class="agent-log-title">Activity log</span>
+                  <button type="button" class="agent-log-toggle" id="agent-log-toggle" onclick="toggleAgentLogPanel()" aria-label="Collapse activity panel">Collapse</button>
+                </div>
                 <div id="agent-log-body"><span class="log-line" style="color:#64748b">Send a message to see steps…</span></div>
               </aside>
+              <button type="button" class="agent-log-fab" id="agent-log-fab" onclick="toggleAgentLogPanel()" aria-label="Expand activity panel">Activity ⟩</button>
             </div>
             <div class="chat-bar">
               <input type="text" id="chat-input" placeholder="Message {{ assistant_name }}..." onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendChat()">
@@ -345,6 +523,13 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script>
     let agentSessionId = null;
+    let chatHistory = [];
+    let lastBotReply = '';
+    let gworkspaceSelectedEmail = null;
+    let gworkspaceData = { mounted: false, accounts: [], enforce_test_users: false };
+    let gworkspaceOAuthPoll = null;
+    let gworkspaceAccountsLoaded = false;
+
     const titles = {
       'agent-setup': ['New agent session', 'Select integrations & framework'],
       'agent-chat': ['Chat', 'Talking to {{ assistant_name }}'],
@@ -380,27 +565,341 @@
 
     if (location.hash === '#studio-tools') showView('studio-tools');
 
+    function isGworkspaceSelected() {
+      return Array.from(document.querySelectorAll('input[name=integration]:checked'))
+        .some((b) => b.value === 'gworkspace');
+    }
+
+    function toggleGworkspaceCard() {
+      const card = document.getElementById('gworkspace-card');
+      const show = isGworkspaceSelected();
+      card.classList.toggle('hidden', !show);
+      if (!show) hideGworkspaceAlert();
+      if (show && !gworkspaceAccountsLoaded) {
+        loadGworkspaceAccounts();
+      }
+    }
+
+    function showGworkspaceAlert(message, kind) {
+      const el = document.getElementById('gworkspace-alert');
+      el.textContent = message;
+      el.className = 'alert' + (kind ? ' ' + kind : '');
+      el.classList.remove('hidden');
+    }
+
+    function hideGworkspaceAlert() {
+      document.getElementById('gworkspace-alert').classList.add('hidden');
+    }
+
+    function gworkspaceSelectAccount(radio) {
+      gworkspaceSelectedEmail = radio.value;
+      document.querySelectorAll('.account-row').forEach((r) => r.classList.remove('selected'));
+      radio.closest('.account-row')?.classList.add('selected');
+      hideGworkspaceAlert();
+    }
+
+    function renderGworkspaceAccounts() {
+      const list = document.getElementById('gworkspace-account-list');
+      const hint = document.getElementById('gworkspace-hint');
+      const card = document.getElementById('gworkspace-card');
+      const accounts = gworkspaceData.accounts || [];
+
+      if (!gworkspaceData.mounted) {
+        hint.textContent = 'Google Workspace is not mounted. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.';
+        list.innerHTML = '';
+        card.style.opacity = '0.55';
+        return;
+      }
+      card.style.opacity = '1';
+      const enforce = gworkspaceData.enforce_test_users;
+      hint.textContent = enforce
+        ? `Select an account for this session. Only ${gworkspaceData.test_users_count} email(s) in GWORKSPACE_TEST_USERS may authenticate.`
+        : 'Select which Google account to use for Gmail/Calendar tools in this session. Set GWORKSPACE_TEST_USERS in .env to enforce the OAuth test-user list.';
+
+      if (!accounts.length) {
+        list.innerHTML = '<p class="hint" style="margin:0">No accounts yet. Authenticate an email below.</p>';
+        gworkspaceSelectedEmail = null;
+        return;
+      }
+
+      list.innerHTML = accounts.map((a) => {
+        const authBadge = a.authenticated
+          ? '<span class="badge auth-ok">authenticated</span>'
+          : '<span class="badge auth-warn">needs sign-in</span>';
+        const allowBadge = a.allowed_to_authenticate === false
+          ? '<span class="badge auth-warn">not in test users</span>'
+          : '';
+        const checked = gworkspaceSelectedEmail === a.email ? 'checked' : '';
+        const sel = gworkspaceSelectedEmail === a.email ? 'selected' : '';
+        return `<label class="account-row ${sel}">
+          <input type="radio" name="gworkspace_account" value="${escapeHtml(a.email)}" ${checked}
+            onchange="gworkspaceSelectAccount(this)">
+          <span>
+            <strong>${escapeHtml(a.email)}</strong> ${authBadge} ${allowBadge}
+            <div class="account-meta">${a.category ? escapeHtml(a.category) + ' · ' : ''}${a.authenticated ? 'Ready for tools' : 'Run Authenticate to sign in'}</div>
+          </span>
+        </label>`;
+      }).join('');
+
+      if (!gworkspaceSelectedEmail) {
+        const firstReady = accounts.find((a) => a.authenticated);
+        const pick = firstReady || accounts[0];
+        if (pick) {
+          gworkspaceSelectedEmail = pick.email;
+          list.querySelectorAll('input[name=gworkspace_account]').forEach((radio) => {
+            if (radio.value === pick.email) {
+              radio.checked = true;
+              radio.closest('.account-row')?.classList.add('selected');
+            }
+          });
+        }
+      }
+    }
+
+    async function loadGworkspaceAccounts() {
+      gworkspaceAccountsLoaded = true;
+      try {
+        const res = await fetch('/api/gworkspace/accounts');
+        gworkspaceData = await res.json();
+        renderGworkspaceAccounts();
+      } catch (e) {
+        document.getElementById('gworkspace-hint').textContent = 'Failed to load accounts: ' + e.message;
+      }
+    }
+
+    function resetGworkspaceAuthBtn() {
+      const btn = document.getElementById('gworkspace-auth-btn');
+      btn.disabled = false;
+      btn.textContent = 'Authenticate';
+    }
+
+    function stopGworkspaceOAuthPoll() {
+      if (gworkspaceOAuthPoll) {
+        clearInterval(gworkspaceOAuthPoll);
+        gworkspaceOAuthPoll = null;
+      }
+    }
+
+    function onGworkspaceOAuthDone(msg) {
+      stopGworkspaceOAuthPoll();
+      resetGworkspaceAuthBtn();
+      if (msg.ok && msg.email) {
+        showGworkspaceAlert(`Signed in as ${msg.email}. Account is ready.`, 'ok');
+        gworkspaceSelectedEmail = msg.email;
+        document.getElementById('gworkspace-new-email').value = '';
+        loadGworkspaceAccounts();
+      } else {
+        let text = msg.error || 'Authentication failed';
+        if (msg.error_code === 'not_in_test_users') {
+          text += '\n\nAsk your admin to add this email to OAuth test users.';
+        }
+        showGworkspaceAlert(text, '');
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      const msg = event.data;
+      if (!msg || msg.type !== 'gworkspace_oauth_done') return;
+      onGworkspaceOAuthDone(msg);
+    });
+
+    function waitForGworkspaceOAuth(oauthState, popup) {
+      stopGworkspaceOAuthPoll();
+      gworkspaceOAuthPoll = setInterval(async () => {
+        try {
+          const st = await fetch('/api/gworkspace/oauth/status?state=' + encodeURIComponent(oauthState));
+          const status = await st.json();
+          if (status.status === 'success') {
+            try { if (popup && !popup.closed) popup.close(); } catch (_) {}
+            onGworkspaceOAuthDone({ ok: true, email: status.email });
+          } else if (status.status === 'error') {
+            onGworkspaceOAuthDone({ ok: false, error: status.error });
+          } else if (popup && popup.closed) {
+            onGworkspaceOAuthDone({
+              ok: false,
+              error: 'Sign-in window closed before authentication finished. Try again.',
+            });
+          }
+        } catch (_) {}
+      }, 1200);
+    }
+
+    async function authenticateGworkspace() {
+      hideGworkspaceAlert();
+      stopGworkspaceOAuthPoll();
+      const input = document.getElementById('gworkspace-new-email');
+      const email = (input.value || '').trim();
+      if (!email || !email.includes('@')) {
+        showGworkspaceAlert('Enter a valid email address.', '');
+        return;
+      }
+      const btn = document.getElementById('gworkspace-auth-btn');
+      btn.disabled = true;
+      btn.textContent = 'Authenticating…';
+      try {
+        const res = await fetch('/api/gworkspace/authenticate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (data.ok && data.auth_url) {
+          showGworkspaceAlert(
+            (data.message || 'Complete sign-in in the new tab.') +
+            '\n\nAdmin: add this redirect URI in Google Cloud → Credentials → OAuth client:\n' +
+            (data.redirect_uri || ''),
+            'info'
+          );
+          const popup = window.open(
+            data.auth_url,
+            'gworkspace_oauth',
+            'width=520,height=720,menubar=no,toolbar=no'
+          );
+          if (!popup) {
+            showGworkspaceAlert(
+              'Popup blocked. Allow popups for this site, then try again.\n\nOr open this URL in this browser:\n' + data.auth_url,
+              ''
+            );
+            resetGworkspaceAuthBtn();
+            return;
+          }
+          waitForGworkspaceOAuth(data.oauth_state, popup);
+          return;
+        }
+        if (data.error_code === 'not_in_test_users') {
+          showGworkspaceAlert((data.error || 'Not allowed.') + (data.hint ? '\n\n' + data.hint : ''), '');
+        } else if (data.error_code === 'google_oauth_denied') {
+          showGworkspaceAlert((data.error || '') + (data.hint ? '\n\n' + data.hint : ''), '');
+        } else {
+          let text = data.error || 'Authentication failed';
+          if (data.hint) text += '\n\n' + data.hint;
+          showGworkspaceAlert(text, '');
+        }
+      } catch (e) {
+        showGworkspaceAlert('Request failed: ' + e.message, '');
+      }
+      resetGworkspaceAuthBtn();
+    }
+
+    document.querySelectorAll('input[name=integration]').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        hideGworkspaceAlert();
+        toggleGworkspaceCard();
+      });
+    });
+
+    toggleGworkspaceCard();
+
+    function toggleAgentLogPanel() {
+      const panel = document.getElementById('agent-log-panel');
+      const btn = document.getElementById('agent-log-toggle');
+      panel.classList.toggle('collapsed');
+      const collapsed = panel.classList.contains('collapsed');
+      btn.textContent = collapsed ? 'Expand' : 'Collapse';
+      btn.setAttribute('aria-label', collapsed ? 'Expand activity panel' : 'Collapse activity panel');
+    }
+
+    function nowTime() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function applyPrompt(text) {
+      const input = document.getElementById('chat-input');
+      input.value = text;
+      input.focus();
+    }
+
+    function clearChat() {
+      document.getElementById('chat-feed').innerHTML = '';
+      chatHistory = [];
+      lastBotReply = '';
+      document.getElementById('agent-log-body').innerHTML = '<span class="log-line" style="color:#64748b">Waiting for messages…</span>';
+      addMsg('bot', 'Chat cleared. Start with a new prompt.');
+    }
+
+    async function copyLastReply() {
+      if (!lastBotReply) {
+        alert('No assistant reply to copy yet.');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(lastBotReply);
+      } catch {
+        alert('Could not copy to clipboard.');
+      }
+    }
+
+    function exportChat() {
+      if (!chatHistory.length) {
+        alert('No chat history to export yet.');
+        return;
+      }
+      const payload = {
+        exported_at: new Date().toISOString(),
+        session_id: agentSessionId,
+        messages: chatHistory,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `proxytools-chat-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     function startAgentSession() {
       const integrations = Array.from(document.querySelectorAll('input[name=integration]:checked')).map((b) => b.value);
       const framework = document.querySelector('input[name=framework]:checked')?.value || 'langgraph';
       if (!integrations.length) { alert('Select at least one integration.'); return; }
 
+      let gworkspace_email = null;
+      if (integrations.includes('gworkspace')) {
+        gworkspace_email = gworkspaceSelectedEmail
+          || document.querySelector('input[name=gworkspace_account]:checked')?.value;
+        if (!gworkspace_email) {
+          showGworkspaceAlert('Select a Google Workspace account or authenticate a new email first.', '');
+          return;
+        }
+        const acc = (gworkspaceData.accounts || []).find((a) => a.email === gworkspace_email);
+        if (acc && !acc.authenticated) {
+          showGworkspaceAlert(
+            `${gworkspace_email} is not authenticated yet. Click Authenticate and complete browser sign-in.`,
+            ''
+          );
+          return;
+        }
+      }
+
       fetch('/api/agent/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ integrations, framework }),
+        body: JSON.stringify({ integrations, framework, gworkspace_email }),
       })
         .then((r) => r.json())
         .then((data) => {
+          if (!data.ok) {
+            if (data.error_code === 'gworkspace_email_required') {
+              showGworkspaceAlert(data.error, '');
+            } else {
+              alert(data.error || 'Could not start session');
+            }
+            return;
+          }
           agentSessionId = data.session_id;
           document.getElementById('nav-chat').style.display = 'block';
           const chips = document.getElementById('session-chips');
           chips.innerHTML =
             `<span class="chip fw">${data.framework}</span>` +
-            data.integrations.map((i) => `<span class="chip">${i}</span>`).join('');
+            data.integrations.map((i) => `<span class="chip">${i}</span>`).join('') +
+            (data.gworkspace_email ? `<span class="chip">${escapeHtml(data.gworkspace_email)}</span>` : '');
           document.getElementById('chat-feed').innerHTML = '';
+          chatHistory = [];
+          lastBotReply = '';
           document.getElementById('agent-log-body').innerHTML = '<span class="log-line" style="color:#64748b">Waiting for messages…</span>';
-          addMsg('bot', `Session started (${data.framework}). Tools from: ${data.integrations.join(', ')}`);
+          const gwsNote = data.gworkspace_email ? ` Google account: ${data.gworkspace_email}.` : '';
+          addMsg('bot', `Session started (${data.framework}). Tools from: ${data.integrations.join(', ')}.${gwsNote}`);
           showView('agent-chat');
         });
     }
@@ -479,12 +978,15 @@
       const div = document.createElement('div');
       div.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
       const who = role === 'user' ? 'You' : '{{ assistant_initials }} {{ assistant_name }}';
+      const when = nowTime();
+      chatHistory.push({ role, text, when, meta: extra?.meta || null });
       if (role === 'user') {
-        div.innerHTML = `<div class="who">${who}</div><div class="bubble">${escapeHtml(text)}</div>`;
+        div.innerHTML = `<div class="who"><span>${who}</span><span class="when">${when}</span></div><div class="bubble">${escapeHtml(text)}</div>`;
       } else {
         const html = renderMarkdown(text);
         const activity = renderActivity(extra?.steps, extra?.tool_calls_used, extra?.meta);
-        div.innerHTML = `<div class="who">${who}</div><div class="bubble md">${html}</div>${activity}`;
+        div.innerHTML = `<div class="who"><span>${who}</span><span class="when">${when}</span></div><div class="bubble md">${html}</div>${activity}`;
+        lastBotReply = text || '';
         if (extra?.steps?.length) appendAgentLog(extra.steps, extra.meta);
       }
       feed.appendChild(div);

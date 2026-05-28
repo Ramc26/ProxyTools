@@ -33,25 +33,40 @@ def _env_ready(env_keys):
     return all(os.getenv(k) for k in env_keys) if env_keys else True
 
 
-def _child_env(env_keys):
+def _child_env(server):
     env = os.environ.copy()
+    for key in server.get("env_unset") or []:
+        env.pop(key, None)
+    env_keys = server.get("env_keys", [])
     for key in env_keys:
         val = os.getenv(key)
         if val:
             env[key] = val
+    for target, source in (server.get("env_map") or {}).items():
+        val = os.getenv(source)
+        if val:
+            env[target] = val
+    for key, val in (server.get("env_defaults") or {}).items():
+        env.setdefault(key, val)
     return env
 
 
 def _transport(server):
     if server["connection"] == "http":
-        return StreamableHttpTransport(
-            url=server["url"],
-            auth=os.getenv(server["env_keys"][0]),
-        )
+        transport = StreamableHttpTransport(url=server["url"])
+        env_keys = server.get("env_keys", [])
+        token = os.getenv(env_keys[0]) if env_keys else None
+        if token:
+            transport = StreamableHttpTransport(
+                url=server["url"],
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        return transport
+
     return StdioTransport(
         command="npx",
         args=["-y", server["package"]],
-        env=_child_env(server.get("env_keys", [])),
+        env=_child_env(server),
     )
 
 

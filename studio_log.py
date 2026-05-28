@@ -19,14 +19,22 @@ GWORKSPACE_ACCOUNTS = Path.home() / ".config/google-workspace-mcp/accounts.json"
 
 _LINE = "─" * 52
 _BOX = "═" * 52
+_MCP_BOX = "┄" * 52
 
 
-def _trunc(text: str, n: int = 200) -> str:
+def _trunc(text, n=200):
     t = (text or "").replace("\n", " ").strip()
     return t if len(t) <= n else t[: n - 3] + "..."
 
 
-def log_agent_turn_start(session_id: str, framework: str, user_message: str, model: str):
+def _json_text(data, n=600):
+    try:
+        return _trunc(json.dumps(data, default=str, separators=(",", ":")), n)
+    except Exception:
+        return _trunc(str(data), n)
+
+
+def log_agent_turn_start(session_id, framework, user_message, model):
     log.info("")
     log.info(_BOX)
     log.info("  AGENT TURN")
@@ -37,7 +45,7 @@ def log_agent_turn_start(session_id: str, framework: str, user_message: str, mod
     log.info("  User: %s", _trunc(user_message, 300))
 
 
-def log_agent_turn_end(session_id: str, ok: bool, model_used: str, step_count: int, reply_preview: str = ""):
+def log_agent_turn_end(session_id, ok, model_used, step_count, reply_preview=""):
     status = "OK" if ok else "FAILED"
     log.info(_LINE)
     log.info("  Turn %s · model=%s · steps=%d", status, model_used, step_count)
@@ -47,7 +55,7 @@ def log_agent_turn_end(session_id: str, ok: bool, model_used: str, step_count: i
     log.info("")
 
 
-def log_agent_step(step: int, kind: str, detail: str = "", extra: dict | None = None):
+def log_agent_step(step, kind, detail="", extra=None):
     """Human-readable step line for agent reasoning loop."""
     label = kind.upper().ljust(12)
     line = f"  Step {step:>2} · {label}"
@@ -63,25 +71,28 @@ def log_agent_step(step: int, kind: str, detail: str = "", extra: dict | None = 
             log.info("           %-10s %s", f"{k}:", _trunc(str(v), 350))
 
 
-def log_agent_llm(model: str, note: str = "request"):
+def log_agent_llm(model, note="request"):
     log.info("  · LLM %s · model=%s", note, model)
 
 
-def log_agent_tool_call(tool_name: str, args: dict):
-    log.info("  · TOOL CALL · %s", tool_name)
-    log.info("           args: %s", _trunc(json.dumps(args, default=str), 400))
+def log_agent_tool_call(tool_name, args):
+    log.info("  %s", _MCP_BOX)
+    log.info("  ┌─ TOOL CALL   %s", tool_name)
+    log.info("  │  INPUT       %s", _json_text(args))
+    log.info("  └────────────────────────────────────────────")
 
 
-def log_agent_tool_result(tool_name: str, ok: bool, preview: str = "", error: str = ""):
-    mark = "✓" if ok else "✗"
-    log.info("  · TOOL %s %s · %s", mark, "done" if ok else "fail", tool_name)
+def log_agent_tool_result(tool_name, ok, preview="", error=""):
+    status = "OK" if ok else "FAIL"
+    log.info("  ┌─ TOOL RESULT %s   %s", status, tool_name)
     if ok and preview:
-        log.info("           result: %s", _trunc(preview, 400))
+        log.info("  │  OUTPUT      %s", _trunc(preview, 500))
     elif error:
-        log.info("           error:  %s", _trunc(error, 400))
+        log.info("  │  ERROR       %s", _trunc(error, 500))
+    log.info("  └────────────────────────────────────────────")
 
 
-def log_agent_fallback(failed_model: str, backup_model: str, error: str):
+def log_agent_fallback(failed_model, backup_model, error):
     log.warning(_LINE)
     log.warning("  ⚠ PRIMARY MODEL FAILED")
     log.warning("           failed:  %s", failed_model)
@@ -90,24 +101,30 @@ def log_agent_fallback(failed_model: str, backup_model: str, error: str):
     log.warning(_LINE)
 
 
-def log_tool_request(tool_name: str, arguments: dict, extra: dict | None = None):
-    safe_args = json.dumps(arguments, default=str)
-    parts = [f"tool={tool_name}", f"args={safe_args}"]
+def log_tool_request(tool_name, arguments, extra=None):
+    parts = []
     if extra:
         for k, v in extra.items():
             parts.append(f"{k}={v}")
-    log.info("  → MCP %s", " | ".join(parts))
+    suffix = f" | {' | '.join(parts)}" if parts else ""
+    log.info("  %s", _MCP_BOX)
+    log.info("  ┌─ MCP REQUEST %s%s", tool_name, suffix)
+    log.info("  │  INPUT       %s", _json_text(arguments))
+    log.info("  └────────────────────────────────────────────")
 
 
-def log_tool_response(tool_name: str, ok: bool, preview: str = "", error: str = ""):
+def log_tool_response(tool_name, ok, preview="", error=""):
+    status = "OK" if ok else "FAIL"
+    log.info("  ┌─ MCP RESPONSE %s   %s", status, tool_name)
     if ok:
         text = (preview or "").replace("\n", " ")
-        log.info("  ← MCP ok   %s | %s", tool_name, _trunc(text, 200))
+        log.info("  │  OUTPUT      %s", _trunc(text, 260))
     else:
-        log.error("  ← MCP fail %s | %s", tool_name, error or preview)
+        log.error("  │  ERROR       %s", _trunc(error or preview, 260))
+    log.info("  └────────────────────────────────────────────")
 
 
-def check_gworkspace_email(email: str) -> dict:
+def check_gworkspace_email(email):
     """Check on-disk Google Workspace credential before calling Gmail tools."""
     path = GWORKSPACE_CREDS_DIR / _email_to_cred_filename(email)
     info = {
@@ -159,8 +176,113 @@ def check_gworkspace_email(email: str) -> dict:
     return info
 
 
-def _email_to_cred_filename(email: str) -> str:
+def _email_to_cred_filename(email):
     return email.replace("@", "_at_").replace(".", "_dot_") + ".json"
+
+
+def _cred_filename_to_email(stem):
+    return stem.replace("_at_", "@").replace("_dot_", ".")
+
+
+def gworkspace_test_users_allowlist():
+    """Comma-separated GWORKSPACE_TEST_USERS in .env; None = no allowlist enforcement."""
+    raw = os.getenv("GWORKSPACE_TEST_USERS", "").strip()
+    if not raw:
+        return None
+    return {e.strip().lower() for e in raw.split(",") if e.strip()}
+
+
+def gworkspace_enforce_test_users():
+    return gworkspace_test_users_allowlist() is not None
+
+
+def is_gworkspace_email_allowed(email):
+    allowlist = gworkspace_test_users_allowlist()
+    if allowlist is None:
+        return True, None
+    normalized = email.strip().lower()
+    if normalized in allowlist:
+        return True, None
+    return (
+        False,
+        f"{email} is not on the app's OAuth test users list. "
+        "Ask your developer or admin to add this email in Google Cloud Console "
+        "(APIs & Services → OAuth consent screen → Audience → Test users) "
+        "before authenticating.",
+    )
+
+
+def classify_gworkspace_auth_error(error_text):
+    """Map Google OAuth errors to a clearer test-user message when applicable."""
+    lower = (error_text or "").lower()
+    markers = (
+        "access_denied",
+        "test user",
+        "not authorized",
+        "not a test user",
+        "has not been granted",
+        "403",
+        "invalid_grant",
+    )
+    if not any(m in lower for m in markers):
+        return None
+    return {
+        "error_code": "google_oauth_denied",
+        "error": (
+            "Google rejected sign-in for this email. While the app is in Testing mode, "
+            "the address must be added under OAuth consent screen → Test users."
+        ),
+        "hint": (
+            "Ask your developer or admin to add this email to the test users list, "
+            "then try Authenticate again."
+        ),
+    }
+
+
+def list_gworkspace_accounts():
+    """Accounts from accounts.json plus credential files on disk."""
+    rows = []
+    seen = set()
+
+    def add_row(email, category=None):
+        key = email.strip().lower()
+        if not key or key in seen:
+            return
+        seen.add(key)
+        cred = check_gworkspace_email(email)
+        allowed, block_reason = is_gworkspace_email_allowed(email)
+        rows.append(
+            {
+                "email": email,
+                "category": category,
+                "authenticated": cred["ok"],
+                "credential_exists": cred["exists"],
+                "allowed_to_authenticate": allowed,
+                "block_reason": block_reason,
+            }
+        )
+
+    if GWORKSPACE_ACCOUNTS.exists():
+        try:
+            data = json.loads(GWORKSPACE_ACCOUNTS.read_text())
+            for acc in data.get("accounts") or []:
+                if isinstance(acc, dict) and acc.get("email"):
+                    add_row(acc["email"], acc.get("category"))
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    if GWORKSPACE_CREDS_DIR.is_dir():
+        for path in GWORKSPACE_CREDS_DIR.glob("*.json"):
+            add_row(_cred_filename_to_email(path.stem))
+
+    rows.sort(key=lambda r: r["email"].lower())
+    allowlist = gworkspace_test_users_allowlist()
+    return {
+        "accounts": rows,
+        "enforce_test_users": gworkspace_enforce_test_users(),
+        "test_users_count": len(allowlist) if allowlist else 0,
+        "credentials_dir": str(GWORKSPACE_CREDS_DIR),
+    }
 
 
 # Extra fields per operation (beyond operation + email)
@@ -198,12 +320,15 @@ TOOL_EXAMPLES = {
         },
     },
     "gworkspace_manage_accounts": {
-        "authenticate": {"operation": "authenticate"},
+        "authenticate": {
+            "operation": "authenticate",
+            "email": "you@company.com",
+        },
     },
 }
 
 
-def validate_gworkspace_tool(tool_name: str, args: dict) -> dict | None:
+def validate_gworkspace_tool(tool_name, args):
     """Catch common argument mistakes before calling the MCP server."""
     if tool_name == "gworkspace_manage_email":
         op = args.get("operation")

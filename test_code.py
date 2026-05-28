@@ -1,13 +1,14 @@
+"""Simple OpenAI chat loop (standalone script, not the studio agent)."""
+
 import os
 import sys
 
 from dotenv import load_dotenv
-from openrouter import OpenRouter
-from openrouter.types import UNSET
+from openai import OpenAI
 
 load_dotenv()
 
-MODEL = "openrouter/owl-alpha"
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 MAX_TURNS = 5
 
 ASSISTANT_NAME = "RamBabu"
@@ -40,20 +41,9 @@ def trim_history(messages):
     return trimmed
 
 
-def chunk_text(chunk):
-    """Pull text from one stream chunk (like TS: chunk.choices[0]?.delta?.content)."""
-    if not chunk.choices:
-        return ""
-    delta = chunk.choices[0].delta
-    content = delta.content
-    if content is None or content is UNSET:
-        return ""
-    return content
-
-
 def chat_stream(client, messages):
     """Stream tokens to stdout; return full assistant reply."""
-    stream = client.chat.send(
+    stream = client.chat.completions.create(
         model=MODEL,
         messages=messages,
         stream=True,
@@ -62,13 +52,15 @@ def chat_stream(client, messages):
     parts = []
     print(f"{ASSISTANT_LABEL}: ", end="", flush=True)
 
-    with stream:
-        for chunk in stream:
-            text = chunk_text(chunk)
-            if text:
-                parts.append(text)
-                sys.stdout.write(text)
-                sys.stdout.flush()
+    for chunk in stream:
+        if not chunk.choices:
+            continue
+        delta = chunk.choices[0].delta
+        text = delta.content or ""
+        if text:
+            parts.append(text)
+            sys.stdout.write(text)
+            sys.stdout.flush()
 
     print("\n")
     return "".join(parts)
@@ -76,47 +68,47 @@ def chat_stream(client, messages):
 
 def chat_once(client, messages):
     """Non-streaming fallback."""
-    response = client.chat.send(model=MODEL, messages=messages)
+    response = client.chat.completions.create(model=MODEL, messages=messages)
     reply = response.choices[0].message.content or ""
     print(f"{ASSISTANT_LABEL}: {reply}\n")
     return reply
 
 
 def main():
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("Set OPENROUTER_API_KEY in your .env file.")
+        print("Set OPENAI_API_KEY in your .env file.")
         return
 
     history = []
     use_stream = True
+    client = OpenAI(api_key=api_key)
 
-    print(f"Chat with {ASSISTANT_NAME} ({ASSISTANT_INITIALS}). Type 'quit' or 'exit' to stop.\n")
+    print(f"Chat with {ASSISTANT_NAME} ({ASSISTANT_INITIALS}) via {MODEL}. Type 'quit' or 'exit' to stop.\n")
 
-    with OpenRouter(api_key=api_key) as client:
-        while True:
-            user_input = input("You: ").strip()
-            if not user_input:
-                continue
-            if user_input.lower() in ("quit", "exit"):
-                print("Bye!")
-                break
+    while True:
+        user_input = input("You: ").strip()
+        if not user_input:
+            continue
+        if user_input.lower() in ("quit", "exit"):
+            print("Bye!")
+            break
 
-            history.append({"role": "user", "content": user_input})
-            messages = trim_history(history)
+        history.append({"role": "user", "content": user_input})
+        messages = trim_history(history)
 
-            try:
-                if use_stream:
-                    reply = chat_stream(client, messages)
-                else:
-                    reply = chat_once(client, messages)
-            except Exception as e:
-                print(f"Error: {e}\n")
-                history.pop()
-                continue
+        try:
+            if use_stream:
+                reply = chat_stream(client, messages)
+            else:
+                reply = chat_once(client, messages)
+        except Exception as e:
+            print(f"Error: {e}\n")
+            history.pop()
+            continue
 
-            if reply:
-                history.append({"role": "assistant", "content": reply})
+        if reply:
+            history.append({"role": "assistant", "content": reply})
 
 
 if __name__ == "__main__":

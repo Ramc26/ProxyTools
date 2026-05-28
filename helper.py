@@ -3,13 +3,14 @@ import os
 import time
 import traceback
 from pathlib import Path
-from typing import Any
 
 from mcp_hub import MOUNT_STATUS, mcp, mount_external_servers
 from servers import EXTERNAL_SERVERS
 from studio_log import (
     TOOL_EXAMPLES,
     check_gworkspace_email,
+    is_gworkspace_email_allowed,
+    list_gworkspace_accounts,
     log,
     log_tool_request,
     log_tool_response,
@@ -140,6 +141,12 @@ def _gworkspace_preflight(tool_name: str, args: dict) -> dict | None:
     """Return error payload if Google Workspace creds are wrong, else None."""
     if not tool_name.startswith("gworkspace_"):
         return None
+    # authenticate creates the token file — must not require one upfront
+    if (
+        tool_name == "gworkspace_manage_accounts"
+        and args.get("operation") == "authenticate"
+    ):
+        return None
     email = args.get("email")
     if not email:
         return None
@@ -162,7 +169,7 @@ def _gworkspace_preflight(tool_name: str, args: dict) -> dict | None:
     }
 
 
-async def run_tool(tool_name: str, arguments: dict | None = None) -> dict[str, Any]:
+async def run_tool(tool_name, arguments=None):
     init_hub()
     args = arguments or {}
     server = _tool_server(tool_name)
@@ -212,8 +219,37 @@ async def run_tool(tool_name: str, arguments: dict | None = None) -> dict[str, A
         }
 
 
-async def test_hub_ping() -> dict[str, Any]:
+async def test_hub_ping():
     return await run_tool("hub_ping", {})
+
+
+def get_gworkspace_accounts():
+    init_hub()
+    gws = next(
+        (s for s in EXTERNAL_SERVERS if s["namespace"] == "gworkspace"),
+        None,
+    )
+    data = list_gworkspace_accounts()
+    data["mounted"] = bool(
+        gws and _env_status(gws.get("env_keys", [])).get("ready")
+    )
+    return data
+
+
+def start_gworkspace_oauth(email, request):
+    """Start OAuth in the user's browser (same window as the studio UI)."""
+    import gworkspace_oauth
+
+    email = (email or "").strip()
+    if not email or "@" not in email:
+        return {
+            "ok": False,
+            "error_code": "invalid_email",
+            "error": "Enter a valid email address.",
+        }
+    base = gworkspace_oauth.public_base_from_request(request)
+    redirect_uri = gworkspace_oauth.redirect_uri_from_base(base)
+    return gworkspace_oauth.begin_oauth(email, redirect_uri)
 
 
 async def get_studio_data(server_filter=None):

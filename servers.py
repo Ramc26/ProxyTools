@@ -31,4 +31,14 @@ EXTERNAL_SERVERS = [
         "package": "@aaronsb/google-workspace-mcp",
         "env_keys": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
     },
+    {
+        "namespace": "gitlab",
+        "title": "GitLab",
+        "connection": "stdio",
+        "package": "@zereight/mcp-gitlab",
+        "env_keys": ["GITLAB_TOKEN_FINE"],
+        "env_map": {"GITLAB_PERSONAL_ACCESS_TOKEN": "GITLAB_TOKEN_FINE"},
+        "env_unset": ["GITLAB_TOKEN"],
+        "env_defaults": {"GITLAB_API_URL": "https://gitlab.com/api/v4"},
+    },
 ]

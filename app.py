@@ -14,12 +14,17 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 class ToolRunRequest(BaseModel):
     tool_name: str
-    arguments: dict | None = None
+    arguments: dict = None
 
 
 class AgentSessionRequest(BaseModel):
-    integrations: list[str] = []
+    integrations: list = []
     framework: str = "langgraph"
+    gworkspace_email: str = None
+
+
+class GworkspaceAuthenticateRequest(BaseModel):
+    email: str
 
 
 class AgentChatRequest(BaseModel):
@@ -37,7 +42,7 @@ app = FastAPI(title="ProxyTools MCP Studio", lifespan=lifespan)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, server: str | None = Query(None)):
+async def index(request: Request, server: str = Query(None)):
     data = await helper.get_studio_data(server_filter=server)
     integrations = agent.list_integrations()
     return templates.TemplateResponse(
@@ -60,7 +65,7 @@ async def index(request: Request, server: str | None = Query(None)):
 
 
 @app.get("/api/tools")
-async def api_tools(server: str | None = Query(None)):
+async def api_tools(server: str = Query(None)):
     return await helper.get_studio_data(server_filter=server)
 
 
@@ -85,11 +90,63 @@ async def run_tool(body: ToolRunRequest):
     return await helper.run_tool(body.tool_name, body.arguments)
 
 
+@app.get("/api/gworkspace/accounts")
+async def gworkspace_accounts():
+    return helper.get_gworkspace_accounts()
+
+
 @app.get("/api/gworkspace/auth")
 async def gworkspace_auth(email: str = Query(...)):
-    from studio_log import check_gworkspace_email
+    from studio_log import check_gworkspace_email, is_gworkspace_email_allowed
 
-    return check_gworkspace_email(email)
+    cred = check_gworkspace_email(email)
+    allowed, block_reason = is_gworkspace_email_allowed(email)
+    cred["allowed_to_authenticate"] = allowed
+    cred["block_reason"] = block_reason
+    return cred
+
+
+@app.post("/api/gworkspace/authenticate")
+async def gworkspace_authenticate(body: GworkspaceAuthenticateRequest, request: Request):
+    return helper.start_gworkspace_oauth(body.email.strip(), request)
+
+
+@app.get("/api/gworkspace/oauth/status")
+async def gworkspace_oauth_status(state: str = Query(...)):
+    import gworkspace_oauth
+
+    return gworkspace_oauth.oauth_status(state)
+
+
+@app.get("/api/gworkspace/oauth/callback")
+async def gworkspace_oauth_callback(
+    request: Request,
+    code: str = None,
+    state: str = None,
+    error: str = None,
+):
+    import gworkspace_oauth
+
+    if error:
+        if state:
+            gworkspace_oauth.mark_oauth_denied(state, error)
+        html = gworkspace_oauth.callback_html(False, None, f"Google OAuth error: {error}", state or "")
+        return HTMLResponse(html)
+
+    if not code or not state:
+        return HTMLResponse(
+            gworkspace_oauth.callback_html(False, None, "Missing code or state.", state or ""),
+            status_code=400,
+        )
+
+    result = await gworkspace_oauth.complete_oauth(code, state)
+    html = gworkspace_oauth.callback_html(
+        result.get("ok", False),
+        result.get("email"),
+        result.get("error"),
+        state,
+    )
+    return HTMLResponse(html)
 
 
 @app.get("/api/agent/integrations")
@@ -104,7 +161,11 @@ async def agent_frameworks():
 
 @app.post("/api/agent/session")
 async def agent_session(body: AgentSessionRequest):
-    return agent.create_session(body.integrations, body.framework)
+    return agent.create_session(
+        body.integrations,
+        body.framework,
+        gworkspace_email=body.gworkspace_email,
+    )
 
 
 @app.post("/api/agent/chat")
